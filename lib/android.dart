@@ -21,8 +21,8 @@ String fetchCurrentBundleName(Context context, String manifestFileData) {
   return label[0];
 }
 
-String fetchCurrentDeepLinkFilterData(
-    Context context, String manifestFileData) {
+String replaceDeepLinkFilterData(
+    Context context, String manifestFileData, Map<String, String?> filter) {
   final parsed = XmlDocument.parse(manifestFileData);
 
   final application = parsed.findAllElements("application").toList()[0];
@@ -31,7 +31,8 @@ String fetchCurrentDeepLinkFilterData(
       .findAllElements("action")
       .where((action) => action.attributes
           .where((attrib) =>
-              attrib.toString() == "android:name" && attrib.value == "VIEW")
+              attrib.name.toString() == "android:name" &&
+              attrib.value == "android.intent.action.VIEW")
           .isNotEmpty)
       .isNotEmpty);
   if (deepLinkFilters.isEmpty) {
@@ -47,33 +48,25 @@ String fetchCurrentDeepLinkFilterData(
     throw Exception(
         "Could not find deep-link data in ${context.androidManifestPath}");
   }
-  return deepLinkFilterData.toString();
+
+  for (var newAttr in filter.entries.where((x) => x.value != null)) {
+    try {
+      deepLinkFilterData.first.attributes
+          .where((attr) => attr.name.toString() == "android:${newAttr.key}")
+          .first
+          .value = newAttr.value!;
+    } catch (_) {
+      throw Exception(
+          "Could not find deep-link data attribute android:${newAttr.key} in ${context.androidManifestPath}");
+    }
+  }
+  return parsed.toString();
 }
 
 String setNewBundleName(Context context, String manifestFileData,
     String currentBundleName, String desiredBundleName) {
   return manifestFileData.replaceAll(
       currentBundleName, 'android:label="${desiredBundleName}"');
-}
-
-String setNewDeepLinkFilterData(
-    Context context,
-    String updatedManifestData,
-    String currentDeepLinkFilter,
-    String? desiredDeepLinkScheme,
-    String? desiredDeepLinkHost) {
-  String updatedDeepLinkFilter = currentDeepLinkFilter;
-  if (desiredDeepLinkScheme != null) {
-    updatedDeepLinkFilter = updatedDeepLinkFilter.replaceAll(
-        RegExp(r'android:scheme=".*?"'),
-        'android:scheme="$desiredDeepLinkScheme"');
-  }
-  if (desiredDeepLinkHost != null) {
-    updatedDeepLinkFilter = updatedDeepLinkFilter.replaceAll(
-        RegExp(r'android:host=".*?"'), 'android:host="$desiredDeepLinkHost"');
-  }
-  return updatedManifestData.replaceAll(
-      currentDeepLinkFilter, updatedDeepLinkFilter);
 }
 
 void updateLauncherName(Context context) {
@@ -83,12 +76,17 @@ void updateLauncherName(Context context) {
       fetchCurrentBundleName(context, manifestFileData);
   String updatedManifestData = setNewBundleName(
       context, manifestFileData, currentBundleName, desiredBundleName);
-  final String? desiredDeepLinkScheme = common.fetchDeepLinkScheme(context);
-  final String? desiredDeepLinkHost = common.fetchDeepLinkHost(context);
-  final String currentDeepLinkFilter =
-      fetchCurrentDeepLinkFilterData(context, manifestFileData);
-  updatedManifestData = setNewDeepLinkFilterData(context, updatedManifestData,
-      currentDeepLinkFilter, desiredDeepLinkScheme, desiredDeepLinkHost);
+  final desiredFilter = {
+    "scheme": common.fetchDeepLinkScheme(context),
+    "host": common.fetchDeepLinkHost(context),
+    "pathPrefix": common.fetchDeepLinkPathPrefix(context),
+    "pathPattern": common.fetchDeepLinkPathPattern(context),
+    "port": common.fetchDeepLinkPort(context),
+    "path": common.fetchDeepLinkPath(context),
+    "mimeType": common.fetchDeepLinkMimeType(context)
+  };
+  updatedManifestData =
+      replaceDeepLinkFilterData(context, updatedManifestData, desiredFilter);
 
   common.overwriteFile(context.androidManifestPath, updatedManifestData);
 }

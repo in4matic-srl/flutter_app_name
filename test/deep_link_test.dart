@@ -28,6 +28,12 @@ void main() {
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="deeplink" android:host="io.flutter.app" />
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
@@ -39,35 +45,29 @@ void main() {
   """;
 
   final String androidManifestUpdated = """
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.fextoolkit_app">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.fextoolkit_app">
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- io.flutter.app.FlutterApplication is an android.app.Application that
          calls FlutterMain.startInitialization(this); in its onCreate method.
          In most cases you can leave this as-is, but you if you want to provide
          additional functionality it is fine to subclass or reimplement
          FlutterApplication and put your custom class here. -->
-    <application
-        android:name="io.flutter.app.FlutterApplication"
-        android:label="Test"
-        android:icon="@mipmap/ic_launcher">
-        <activity
-            android:name=".MainActivity"
-            android:launchMode="singleTop"
-            android:theme="@style/LaunchTheme"
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
-            android:hardwareAccelerated="true"
-            android:windowSoftInputMode="adjustResize">
+    <application android:name="io.flutter.app.FlutterApplication" android:label="Flutter App Name" android:icon="@mipmap/ic_launcher">
+        <activity android:name=".MainActivity" android:launchMode="singleTop" android:theme="@style/LaunchTheme" android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode" android:hardwareAccelerated="true" android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="test" android:host="io.flutter.test"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
-        <meta-data
-            android:name="flutterEmbedding"
-            android:value="2" />
+        <meta-data android:name="flutterEmbedding" android:value="2"/>
     </application>
 </manifest>
   """;
@@ -179,13 +179,8 @@ void main() {
 
   test("Android", () {
     expect(
-      android.fetchCurrentBundleName(context, androidManifest),
-      equals('android:label="Flutter App Name"'),
-    );
-
-    expect(
-      android.setNewBundleName(
-          context, androidManifest, 'android:label="Flutter App Name"', "Test"),
+      android.replaceDeepLinkFilterData(context, androidManifest,
+          {'scheme': 'test', 'host': 'io.flutter.test'}),
       equals(androidManifestUpdated),
     );
   });

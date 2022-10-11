@@ -39,6 +39,10 @@ Map getYamlKeyData(Context context) {
   return _yamlKeyData!;
 }
 
+void cleanCache() {
+  _yamlKeyData = null;
+}
+
 String fetchLauncherName(Context context) {
   final String? launcherName = getYamlKeyData(context)["name"];
   if (launcherName == null) {
@@ -58,4 +62,24 @@ String? fetchDeepLinkScheme(Context context) {
 
 String? fetchDeepLinkHost(Context context) {
   return getYamlKeyData(context)["deep_link_host"] ?? fetchId(context);
+}
+
+String? fetchDeepLinkPath(Context context) {
+  return getYamlKeyData(context)["deep_link_path"];
+}
+
+String? fetchDeepLinkPathPattern(Context context) {
+  return getYamlKeyData(context)["deep_link_path_pattern"];
+}
+
+String? fetchDeepLinkPathPrefix(Context context) {
+  return getYamlKeyData(context)["deep_link_path_prefix"];
+}
+
+String? fetchDeepLinkPort(Context context) {
+  return getYamlKeyData(context)["deep_link_port"];
+}
+
+String? fetchDeepLinkMimeType(Context context) {
+  return getYamlKeyData(context)["deep_link_mime_type"];
 }

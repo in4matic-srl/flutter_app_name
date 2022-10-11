@@ -1,9 +1,9 @@
+import "package:flutter_app_name/common.dart";
+import "package:flutter_app_name/context.dart";
 import "package:test/test.dart";
 
-import "package:flutter_app_name/context.dart";
-import "package:flutter_app_name/common.dart";
-
 void main() {
+  tearDown(() => cleanCache());
   test("Load valid yaml file", () {
     final context = Context(
       yamlKeyName: "flutter_app_name",
