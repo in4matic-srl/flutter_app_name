@@ -8,11 +8,13 @@ A command-line tool that makes it trivial to set the launcher name for iOS and A
 
 ```
 dev_dependencies:
-  flutter_app_name: ^0.1.2
+  flutter_app_name: ^0.1.3
 
 flutter_app_name:
   name: "My Cool App"
   id: "it.in4matic.flutter_app_name"
+  deep_link_scheme: "mycoolapp"
+  deep_link_host: "in4matic.it"
 ```
 
 2. Run flutter_app_name in your project's directory

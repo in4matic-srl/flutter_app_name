@@ -3,5 +3,6 @@ android/
 ios/
 .dart_tool/
 .packages
+.idea/
 
 build/

@@ -21,40 +21,41 @@ Map readYamlFile(String yamlFilePath) {
   return yamlData;
 }
 
+Map? _yamlKeyData; // cached
+
 Map getYamlKeyData(Context context) {
-  final String yamlFilePath = context.pubspecPath;
-  final String yamlKeyName = context.yamlKeyName;
+  if (_yamlKeyData == null) {
+    final String yamlFilePath = context.pubspecPath;
+    final String yamlKeyName = context.yamlKeyName;
 
-  final Map yamlData = readYamlFile(yamlFilePath);
-  final Map? yamlKeyData = yamlData[yamlKeyName];
+    final Map yamlData = readYamlFile(yamlFilePath);
+    _yamlKeyData = yamlData[yamlKeyName];
 
-  if (yamlKeyData == null) {
-    throw Exception(
-        "Your pubspec.yaml file must have a key ${yamlKeyName} in it.");
+    if (_yamlKeyData == null) {
+      throw Exception(
+          "Your pubspec.yaml file must have a key ${yamlKeyName} in it.");
+    }
   }
-
-  return yamlKeyData as Map;
+  return _yamlKeyData!;
 }
 
 String fetchLauncherName(Context context) {
-  final yamlKeyName = context.yamlKeyName;
-
-  final Map yamlData = getYamlKeyData(context);
-  final String? launcherName = yamlData["name"];
-
+  final String? launcherName = getYamlKeyData(context)["name"];
   if (launcherName == null) {
     throw Exception(
-        "You must set the launcher name under the '${yamlKeyName}' section of your pubspec.yaml file.");
+        "You must set the launcher name under the '${context.yamlKeyName}' section of your pubspec.yaml file.");
   }
-
-  return launcherName as String;
+  return launcherName;
 }
 
 String? fetchId(Context context) {
-  final yamlKeyName = context.yamlKeyName;
+  return getYamlKeyData(context)["id"];
+}
 
-  final Map yamlData = getYamlKeyData(context);
-  final String? id = yamlData["id"];
+String? fetchDeepLinkScheme(Context context) {
+  return getYamlKeyData(context)["deep_link_scheme"];
+}
 
-  return id as String?;
+String? fetchDeepLinkHost(Context context) {
+  return getYamlKeyData(context)["deep_link_host"] ?? fetchId(context);
 }

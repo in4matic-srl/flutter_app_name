@@ -1,8 +1,7 @@
-import "dart:io";
 import "package:xml/xml.dart";
 
-import "context.dart";
 import "common.dart" as common;
+import "context.dart";
 
 String fetchCurrentBundleName(Context context, String plistFileData) {
   final parsed = XmlDocument.parse(plistFileData);

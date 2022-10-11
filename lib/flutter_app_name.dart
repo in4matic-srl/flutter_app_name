@@ -2,10 +2,10 @@ library flutter_app_name;
 
 import "package:rename/rename.dart";
 
-import "context.dart";
-import "common.dart";
-import "ios.dart" as ios;
 import "android.dart" as android;
+import "common.dart";
+import "context.dart";
+import "ios.dart" as ios;
 
 void run() {
   final context = Context(

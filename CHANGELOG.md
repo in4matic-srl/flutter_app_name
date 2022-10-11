@@ -1,7 +1,12 @@
+0.1.3
+=====
+* New feature: change deep linking filters
+
 0.1.2
 =====
 
 * Update dependencies
+* New feature: change id
 
 0.1.1
 =====
