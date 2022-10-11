@@ -3,29 +3,28 @@ import "package:xml/xml.dart";
 import "common.dart" as common;
 import "context.dart";
 
-String fetchCurrentBundleName(Context context, String manifestFileData) {
+String replaceBundleName(
+    Context context, String manifestFileData, String desiredBundleName) {
   final parsed = XmlDocument.parse(manifestFileData.trim());
 
-  final application = parsed.findAllElements("application").toList()[0];
-
-  final List<String> label = application.attributes
-      .where((attrib) => attrib.toString().contains("android:label"))
-      .map((i) => i.toString())
-      .toList();
-
-  if (label.isEmpty) {
+  final application =
+      parsed.findElements("manifest").first.findElements("application").first;
+  var applicationLabel = application.attributes
+      .where((attrib) => attrib.name.toString() == "android:label");
+  if (applicationLabel.isEmpty) {
     throw Exception(
         "Could not find android:label in ${context.androidManifestPath}");
   }
-
-  return label[0];
+  applicationLabel.first.value = desiredBundleName;
+  return common.format(parsed);
 }
 
 String replaceDeepLinkFilterData(
     Context context, String manifestFileData, Map<String, String?> filter) {
   final parsed = XmlDocument.parse(manifestFileData.trim());
 
-  final application = parsed.findAllElements("application").toList()[0];
+  final application =
+      parsed.findElements("manifest").first.findElements("application").first;
   final intentFilters = application.findAllElements("intent-filter").toList();
   final deepLinkFilters = intentFilters.where((intentFilter) => intentFilter
       .findAllElements("action")
@@ -60,26 +59,14 @@ String replaceDeepLinkFilterData(
           "Could not find deep-link data attribute android:${newAttr.key} in ${context.androidManifestPath}");
     }
   }
-  print('"""${common.format(parsed)}"""');
   return common.format(parsed);
 }
 
-String setNewBundleName(Context context, String manifestFileData,
-    String currentBundleName, String desiredBundleName) {
-  return manifestFileData.replaceAll(
-      currentBundleName, 'android:label="${desiredBundleName}"');
-}
-
 void updateLauncherName(Context context) {
-  final String manifestFileData = common.readFile(context.androidManifestPath);
+  String manifest = common.readFile(context.androidManifestPath);
   final String desiredBundleName = common.fetchLauncherName(context);
-  final String currentBundleName =
-      fetchCurrentBundleName(context, manifestFileData);
-  String updatedManifestData = setNewBundleName(
-      context, manifestFileData, currentBundleName, desiredBundleName);
+  manifest = replaceBundleName(context, manifest, desiredBundleName);
   final desiredFilter = common.fetchDeepLinkFilter(context);
-  updatedManifestData =
-      replaceDeepLinkFilterData(context, updatedManifestData, desiredFilter);
-
-  common.overwriteFile(context.androidManifestPath, updatedManifestData);
+  manifest = replaceDeepLinkFilterData(context, manifest, desiredFilter);
+  common.overwriteFile(context.androidManifestPath, manifest);
 }
