@@ -4,25 +4,22 @@ import "common.dart" as common;
 import "context.dart";
 
 String fetchCurrentBundleName(Context context, String plistFileData) {
-  final parsed = XmlDocument.parse(plistFileData);
-
-  final allKeys = parsed.findAllElements("key");
-  final allValues = parsed.findAllElements("string").toList();
-
   String? bundleName = null;
 
-  allKeys.toList().asMap().forEach((key, val) {
-    if (val.toString().contains("CFBundleName")) {
-      bundleName = allValues[key].toString();
+  final parsed = XmlDocument.parse(plistFileData.trim());
+  final dict = parsed.findElements("plist").first.findElements("dict").first;
+  for (var element in dict.childElements) {
+    print(
+        "${element.toString()} ${element.name.toString()} ${element.text} --> ${element.nextElementSibling?.text}");
+    if (element.name.toString() == "key" && element.text == "CFBundleName") {
+      bundleName = element.nextElementSibling!.text;
     }
-  });
-
-  if (bundleName == null) {
-    throw Exception(
-        "Bundle name not found in ${context.infoPlistPath}. Info.plist might be corrupt.");
   }
 
-  return bundleName as String;
+  if (bundleName == null) {
+    throw Exception("Bundle name not found in ${context.infoPlistPath}");
+  }
+  return bundleName;
 }
 
 String setNewBundleName(Context context, String plistFileData,
@@ -31,13 +28,79 @@ String setNewBundleName(Context context, String plistFileData,
       currentBundleName, "<string>${desiredBundleName}</string>");
 }
 
-void updateLauncherName(Context context) {
-  final String plistFileData = common.readFile(context.infoPlistPath);
-  final String desiredBundleName = common.fetchLauncherName(context);
-  final String currentBundleName =
-      fetchCurrentBundleName(context, plistFileData);
-  final String updatedPlistData = setNewBundleName(
-      context, plistFileData, currentBundleName, desiredBundleName);
+String replaceBundleName(
+    Context context, String plistFileData, String desiredBundleName) {
+  final parsed = XmlDocument.parse(plistFileData.trim());
+  final dict = parsed.findElements("plist").first.findElements("dict").first;
+  bool found = false;
+  for (var element in dict.childElements) {
+    print(
+        "${element.toString()} ${element.name.toString()} ${element.text} --> ${element.nextElementSibling?.text}");
+    if (element.name.toString() == "key" &&
+        (element.text == "CFBundleName" ||
+            element.text == "CFBundleDisplayName")) {
+      element.nextElementSibling!.innerText = desiredBundleName;
+      found = true;
+    }
+  }
 
-  common.overwriteFile(context.infoPlistPath, updatedPlistData);
+  if (!found) {
+    throw Exception("Bundle name not found in ${context.infoPlistPath}");
+  }
+  return common.format(parsed);
+}
+
+String replaceDeepLinkFilterData(
+    Context context, String plistFileData, Map<String, String?> desiredFilter) {
+  final parsed = XmlDocument.parse(plistFileData.trim());
+  final dict = parsed.findElements("plist").first.findElements("dict").first;
+  for (var element in dict.childElements) {
+    if (element.name.toString() == "key" &&
+        element.text == "CFBundleURLTypes") {
+      final urlTypesArray = element.nextElementSibling;
+      if (urlTypesArray!.childElements.isEmpty) {
+        throw Exception(
+            "CFBundleURLTypes is empty in ${context.infoPlistPath}");
+      }
+      if (urlTypesArray.childElements.length > 1) {
+        throw Exception(
+            "CFBundleURLTypes has more than one element in ${context.infoPlistPath}");
+      }
+      final urlTypeDict = urlTypesArray.childElements.first;
+      for (var urlTypeDictElement in urlTypeDict.childElements) {
+        if (desiredFilter["scheme"] != null &&
+            urlTypeDictElement.name.toString() == "key" &&
+            urlTypeDictElement.text == "CFBundleURLSchemes") {
+          final urlSchemesArray = urlTypeDictElement.nextElementSibling;
+          if (urlSchemesArray!.childElements.isEmpty) {
+            throw Exception(
+                "CFBundleURLSchemes is empty in ${context.infoPlistPath}");
+          }
+          if (urlSchemesArray.childElements.length > 1) {
+            throw Exception(
+                "CFBundleURLSchemes has more than one element in ${context.infoPlistPath}");
+          }
+          final urlScheme = urlSchemesArray.childElements.first;
+          urlScheme.innerText = desiredFilter["scheme"]!;
+        }
+        if (desiredFilter["host"] != null &&
+            urlTypeDictElement.name.toString() == "key" &&
+            urlTypeDictElement.text == "CFBundleURLName") {
+          final urlName = urlTypeDictElement.nextElementSibling;
+          urlName!.innerText = desiredFilter["host"]!;
+        }
+      }
+    }
+  }
+  print('"""${common.format(parsed)}"""');
+  return common.format(parsed);
+}
+
+void updateLauncherName(Context context) {
+  String plist = common.readFile(context.infoPlistPath);
+  final String desiredBundleName = common.fetchLauncherName(context);
+  plist = replaceBundleName(context, plist, desiredBundleName);
+  final desiredFilter = common.fetchDeepLinkFilter(context);
+  plist = replaceDeepLinkFilterData(context, plist, desiredFilter);
+  common.overwriteFile(context.infoPlistPath, plist);
 }

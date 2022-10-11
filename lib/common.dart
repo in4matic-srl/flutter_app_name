@@ -1,5 +1,6 @@
 import "dart:io";
 
+import 'package:xml/xml.dart';
 import "package:yaml/yaml.dart";
 
 import "context.dart";
@@ -83,3 +84,18 @@ String? fetchDeepLinkPort(Context context) {
 String? fetchDeepLinkMimeType(Context context) {
   return getYamlKeyData(context)["deep_link_mime_type"];
 }
+
+Map<String, String?> fetchDeepLinkFilter(Context context) {
+  return {
+    "scheme": fetchDeepLinkScheme(context),
+    "host": fetchDeepLinkHost(context),
+    "pathPrefix": fetchDeepLinkPathPrefix(context),
+    "pathPattern": fetchDeepLinkPathPattern(context),
+    "port": fetchDeepLinkPort(context),
+    "path": fetchDeepLinkPath(context),
+    "mimeType": fetchDeepLinkMimeType(context),
+  };
+}
+
+String format(XmlDocument xmlDocument) =>
+    xmlDocument.toXmlString(pretty: true, indent: "  ");

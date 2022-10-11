@@ -4,7 +4,7 @@ import "common.dart" as common;
 import "context.dart";
 
 String fetchCurrentBundleName(Context context, String manifestFileData) {
-  final parsed = XmlDocument.parse(manifestFileData);
+  final parsed = XmlDocument.parse(manifestFileData.trim());
 
   final application = parsed.findAllElements("application").toList()[0];
 
@@ -23,7 +23,7 @@ String fetchCurrentBundleName(Context context, String manifestFileData) {
 
 String replaceDeepLinkFilterData(
     Context context, String manifestFileData, Map<String, String?> filter) {
-  final parsed = XmlDocument.parse(manifestFileData);
+  final parsed = XmlDocument.parse(manifestFileData.trim());
 
   final application = parsed.findAllElements("application").toList()[0];
   final intentFilters = application.findAllElements("intent-filter").toList();
@@ -60,7 +60,8 @@ String replaceDeepLinkFilterData(
           "Could not find deep-link data attribute android:${newAttr.key} in ${context.androidManifestPath}");
     }
   }
-  return parsed.toString();
+  print('"""${common.format(parsed)}"""');
+  return common.format(parsed);
 }
 
 String setNewBundleName(Context context, String manifestFileData,
@@ -76,15 +77,7 @@ void updateLauncherName(Context context) {
       fetchCurrentBundleName(context, manifestFileData);
   String updatedManifestData = setNewBundleName(
       context, manifestFileData, currentBundleName, desiredBundleName);
-  final desiredFilter = {
-    "scheme": common.fetchDeepLinkScheme(context),
-    "host": common.fetchDeepLinkHost(context),
-    "pathPrefix": common.fetchDeepLinkPathPrefix(context),
-    "pathPattern": common.fetchDeepLinkPathPattern(context),
-    "port": common.fetchDeepLinkPort(context),
-    "path": common.fetchDeepLinkPath(context),
-    "mimeType": common.fetchDeepLinkMimeType(context)
-  };
+  final desiredFilter = common.fetchDeepLinkFilter(context);
   updatedManifestData =
       replaceDeepLinkFilterData(context, updatedManifestData, desiredFilter);
 
