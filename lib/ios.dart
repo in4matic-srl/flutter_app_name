@@ -3,31 +3,6 @@ import "package:xml/xml.dart";
 import "common.dart" as common;
 import "context.dart";
 
-String fetchCurrentBundleName(Context context, String plistFileData) {
-  String? bundleName = null;
-
-  final parsed = XmlDocument.parse(plistFileData.trim());
-  final dict = parsed.findElements("plist").first.findElements("dict").first;
-  for (var element in dict.childElements) {
-    print(
-        "${element.toString()} ${element.name.toString()} ${element.text} --> ${element.nextElementSibling?.text}");
-    if (element.name.toString() == "key" && element.text == "CFBundleName") {
-      bundleName = element.nextElementSibling!.text;
-    }
-  }
-
-  if (bundleName == null) {
-    throw Exception("Bundle name not found in ${context.infoPlistPath}");
-  }
-  return bundleName;
-}
-
-String setNewBundleName(Context context, String plistFileData,
-    String currentBundleName, String desiredBundleName) {
-  return plistFileData.replaceAll(
-      currentBundleName, "<string>${desiredBundleName}</string>");
-}
-
 String replaceBundleName(
     Context context, String plistFileData, String desiredBundleName) {
   final parsed = XmlDocument.parse(plistFileData.trim());
@@ -92,7 +67,6 @@ String replaceDeepLinkFilterData(
       }
     }
   }
-  print('"""${common.format(parsed)}"""');
   return common.format(parsed);
 }
 
