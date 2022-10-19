@@ -9,8 +9,6 @@ String replaceBundleName(
   final dict = parsed.findElements("plist").first.findElements("dict").first;
   bool found = false;
   for (var element in dict.childElements) {
-    print(
-        "${element.toString()} ${element.name.toString()} ${element.text} --> ${element.nextElementSibling?.text}");
     if (element.name.toString() == "key" &&
         (element.text == "CFBundleName" ||
             element.text == "CFBundleDisplayName")) {
